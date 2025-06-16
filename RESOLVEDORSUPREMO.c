@@ -3,47 +3,52 @@
 #include <string.h>
 #include <math.h>
 
-float parse_coef(char *term, const char *var)
+void removeEspacos(char *str)
 {
-    char buffer[20];
-    float coef = 0;
-
-    if (strcmp(term, var) == 0)
-        return 1;
-    if (strcmp(term, "-") == 0 || strcmp(term, "-x") == 0 || strcmp(term, "-x^2") == 0)
-        return -1;
-
-    sscanf(term, "%[^x]", buffer);
-    coef = atof(buffer);
-    return coef;
+    int i, j = 0;
+    char temp[100];
+    for (i = 0; str[i] != '\0'; i++)
+    {
+        if (str[i] != ' ')
+            temp[j++] = str[i];
+    }
+    temp[j] = '\0';
+    strcpy(str, temp);
 }
 
-void resolverEquacao(char *eq)
+float extrairCoeficiente(char *termo)
+{
+    if (termo[0] == 'x')
+        return 1.0;
+    if (termo[0] == '-' && termo[1] == 'x')
+        return -1.0;
+
+    char buffer[30] = {0};
+    sscanf(termo, "%[^x]", buffer);
+    return atof(buffer);
+}
+
+void resolverEquacao(char *entrada)
 {
     float a = 0, b = 0, c = 0;
-    char *ladoEsq, *ladoDir;
-    char temp[100];
-    strcpy(temp, eq);
+    char eq[100];
+    strcpy(eq, entrada);
+    removeEspacos(eq);
 
-    // Remover espacos
-    char limpo[100] = {0};
-    for (int i = 0, j = 0; temp[i]; i++)
-        if (temp[i] != ' ')
-            limpo[j++] = temp[i];
+    char *ladoEsq = strtok(eq, "=");
+    char *ladoDir = strtok(NULL, "=");
 
-    ladoEsq = strtok(limpo, "=");
-    ladoDir = strtok(NULL, "=");
     if (!ladoEsq || !ladoDir || strcmp(ladoDir, "0") != 0)
     {
-        printf("Equacao invalida. Use formato correto com = 0.\n");
+        printf("Equacao invalida. Certifique-se de usar o formato correto (ex: x^2+2x+1=0).\n");
         return;
     }
 
-    char termo[20];
     int i = 0, j = 0, sinal = 1;
+    char termo[30];
+
     while (ladoEsq[i])
     {
-
         if (ladoEsq[i] == '+')
         {
             sinal = 1;
@@ -62,13 +67,13 @@ void resolverEquacao(char *eq)
         }
         termo[j] = '\0';
 
-        if (strstr(termo, "x^2"))
+        if (strstr(termo, "x^2") != NULL)
         {
-            a += sinal * parse_coef(termo, "x^2");
+            a += sinal * extrairCoeficiente(termo);
         }
-        else if (strstr(termo, "x"))
+        else if (strstr(termo, "x") != NULL && strstr(termo, "^") == NULL)
         {
-            b += sinal * parse_coef(termo, "x");
+            b += sinal * extrairCoeficiente(termo);
         }
         else
         {
@@ -87,13 +92,12 @@ void resolverEquacao(char *eq)
     if (a == 0)
     {
         float x = -c / b;
-        if (x == -0.0f)
-            x = 0.0f;
         printf("Grau: 1o grau | Possui Solucao Real: Sim | Solucao: x=%.2f\n", x);
     }
     else
     {
         float delta = b * b - 4 * a * c;
+
         if (delta < 0)
         {
             printf("Grau: 2o grau | Possui Solucao Real: Nao | Solucao: x=N.A.\n");
@@ -101,18 +105,12 @@ void resolverEquacao(char *eq)
         else if (delta == 0)
         {
             float x = -b / (2 * a);
-            if (x == -0.0f)
-                x = 0.0f;
             printf("Grau: 2o grau | Possui Solucao Real: Sim | Solucao: x=%.2f\n", x);
         }
         else
         {
             float x1 = (-b + sqrt(delta)) / (2 * a);
             float x2 = (-b - sqrt(delta)) / (2 * a);
-            if (x1 == -0.0f)
-                x1 = 0.0f;
-            if (x2 == -0.0f)
-                x2 = 0.0f;
             printf("Grau: 2o grau | Possui Solucao Real: Sim | Solucao: x=%.2f, x=%.2f\n", x1, x2);
         }
     }
@@ -125,7 +123,12 @@ int main()
 
     while (continuar)
     {
+#ifdef _WIN32
         system("cls");
+#else
+        system("clear");
+#endif
+
         printf("===============================\n");
         printf("    RESOLVEDOR SUPREMO EM C    \n");
         printf("===============================\n");
@@ -133,7 +136,7 @@ int main()
 
         getchar();
         fgets(equacao, sizeof(equacao), stdin);
-        equacao[strcspn(equacao, "\n")] = 0;
+        equacao[strcspn(equacao, "\n")] = '\0';
 
         resolverEquacao(equacao);
 
